@@ -12,7 +12,6 @@ extern "C" {
 #define MAX_HISTORY 1000
 #define MAX_EATEN_PIECES 16
 
-/* White pieces */
 #define Wpawn 'p'
 #define Wrook 'r'
 #define Wknight 'n'
@@ -20,7 +19,6 @@ extern "C" {
 #define Wqueen 'q'
 #define Wking 'k'
 
-/* Black pieces */
 #define Bpawn 'P'
 #define Brook 'R'
 #define Bknight 'N'
@@ -28,12 +26,10 @@ extern "C" {
 #define Bqueen 'Q'
 #define Bking 'K'
 
-/* Board square representation */
 #define WEmpty '-'
 #define BEmpty '.'
 #define EMPTY_SQUARE(row, col) (((row) + (col)) % 2 ? BEmpty : WEmpty)
 
-/* Colors / Turns */
 #define WHITE_PLAYER 0
 #define BLACK_PLAYER 1
 
@@ -67,4 +63,4 @@ extern game current;
 }
 #endif
 
-#endif // VARIABLES_H
+#endif

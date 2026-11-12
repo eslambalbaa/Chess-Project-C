@@ -54,7 +54,6 @@ static bool is_valid_pawn_move(char board[BOARD_ROWS][BOARD_COLS], char piece,
     int initial_row = (piece == Wpawn) ? 6 : 1;
     int ep_target_row = (piece == Wpawn) ? 2 : 5;
 
-    // Normal 1-step and 2-step advance
     if (col_diff == 0)
     {
         if (row_diff == forward_dir && isempty(board[dest_row][dest_col]))
@@ -64,7 +63,6 @@ static bool is_valid_pawn_move(char board[BOARD_ROWS][BOARD_COLS], char piece,
             isempty(board[start_row + forward_dir][start_col]))
             return true;
     }
-    // Diagonal capture & En Passant
     else if (abs(col_diff) == 1 && row_diff == forward_dir)
     {
         if (!isempty(board[dest_row][dest_col]))
@@ -87,12 +85,10 @@ static bool is_valid_castling(char board[BOARD_ROWS][BOARD_COLS], char king_piec
     if (start_row != home_row || king_moved)
         return false;
 
-    // Kingside (O-O) -> dest_col 6 (G file)
     if (dest_col == 6 && !rook_moved_h && is_path_clear(board, home_row, 7, home_row, 4))
     {
         if (check(board, player))
             return false;
-        // Test transit square col 5 (F file)
         board[home_row][5] = king_piece;
         board[home_row][4] = EMPTY_SQUARE(home_row, 4);
         bool in_check = check(board, player);
@@ -101,12 +97,10 @@ static bool is_valid_castling(char board[BOARD_ROWS][BOARD_COLS], char king_piec
         return !in_check;
     }
 
-    // Queenside (O-O-O) -> dest_col 2 (C file)
     if (dest_col == 2 && !rook_moved_a && is_path_clear(board, home_row, 0, home_row, 4))
     {
         if (check(board, player))
             return false;
-        // Test transit square col 3 (D file)
         board[home_row][3] = king_piece;
         board[home_row][4] = EMPTY_SQUARE(home_row, 4);
         bool in_check = check(board, player);
