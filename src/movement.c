@@ -8,33 +8,33 @@
 #include <string.h>
 #include <ctype.h>
 
-int is_white_turn(int moves_played)
+bool is_white_turn(int moves_played)
 {
-    return turn(moves_played) == 0;
+    return turn(moves_played) == WHITE_PLAYER;
 }
 
-int is_black_turn(int moves_played)
+bool is_black_turn(int moves_played)
 {
-    return turn(moves_played) == 1;
+    return turn(moves_played) == BLACK_PLAYER;
 }
 
 static void update_castle_flags(char start_piece, int start_row, int start_col, int dest_col)
 {
-    if (start_piece == 'k')
+    if (start_piece == Wking)
         current.white_king_moved = 1;
-    else if (start_piece == 'K')
+    else if (start_piece == Bking)
         current.black_king_moved = 1;
 
-    if (start_piece == 'r' && start_row == 7 && start_col == 0)
+    if (start_piece == Wrook && start_row == 7 && start_col == 0)
         current.white_rook_moved_a = 1;
-    if (start_piece == 'r' && start_row == 7 && start_col == 7)
+    if (start_piece == Wrook && start_row == 7 && start_col == 7)
         current.white_rook_moved_h = 1;
-    if (start_piece == 'R' && start_row == 0 && start_col == 0)
+    if (start_piece == Brook && start_row == 0 && start_col == 0)
         current.black_rook_moved_a = 1;
-    if (start_piece == 'R' && start_row == 0 && start_col == 7)
+    if (start_piece == Brook && start_row == 0 && start_col == 7)
         current.black_rook_moved_h = 1;
 
-    if ((start_piece == 'k' || start_piece == 'K') && abs(start_col - dest_col) == 2)
+    if ((start_piece == Wking || start_piece == Bking) && abs(start_col - dest_col) == 2)
     {
         int rook_start_col = (dest_col == 6) ? 7 : 0;
         if (rook_start_col == 7 && start_row == 7)
@@ -48,8 +48,8 @@ static void update_castle_flags(char start_piece, int start_row, int start_col, 
     }
 }
 
-int apply_gui_move(char board[8][8], char c1, int r1, char c2, int r2, char prom_piece) {
-    if (!is_valid_move(board, c1, r1, c2, r2, 0)) return 0;
+bool apply_gui_move(char board[BOARD_ROWS][BOARD_COLS], char c1, int r1, char c2, int r2, char prom_piece) {
+    if (!is_valid_move(board, c1, r1, c2, r2, 0)) return false;
     int dest_col = c2 - 'A';
     int dest_row = 8 - r2;
     int start_col = c1 - 'A';
@@ -58,46 +58,46 @@ int apply_gui_move(char board[8][8], char c1, int r1, char c2, int r2, char prom
     int eaten_piece_val = board[dest_row][dest_col];
     int is_en_passant = 0;
     int en_passant_row = -1;
-    
-    if ((start_piece == 'p' || start_piece == 'P') && start_col != dest_col && isempty(eaten_piece_val)) {
+
+    if ((start_piece == Wpawn || start_piece == Bpawn) && start_col != dest_col && isempty(eaten_piece_val)) {
         is_en_passant = 1;
         en_passant_row = start_row;
         eaten_piece_val = board[en_passant_row][dest_col];
     }
-    
+
     history[current.moves_played] = current;
     undoCount = 0;
-    
+
     board[dest_row][dest_col] = start_piece;
-    board[start_row][start_col] = (start_row + start_col) % 2 ? '.' : '-';
-    if (is_en_passant) board[en_passant_row][dest_col] = (en_passant_row + dest_col) % 2 ? '.' : '-';
-    
-    if ((start_piece == 'k' || start_piece == 'K') && abs(start_col - dest_col) == 2) {
+    board[start_row][start_col] = EMPTY_SQUARE(start_row, start_col);
+    if (is_en_passant) board[en_passant_row][dest_col] = EMPTY_SQUARE(en_passant_row, dest_col);
+
+    if ((start_piece == Wking || start_piece == Bking) && abs(start_col - dest_col) == 2) {
         int rook_start_col = (dest_col == 6) ? 7 : 0;
         int rook_dest_col = (dest_col == 6) ? 5 : 3;
         board[start_row][rook_dest_col] = board[start_row][rook_start_col];
-        board[start_row][rook_start_col] = (start_row + rook_dest_col) % 2 ? '.' : '-';
+        board[start_row][rook_start_col] = EMPTY_SQUARE(start_row, rook_start_col);
     }
-    
+
     update_castle_flags(start_piece, start_row, start_col, dest_col);
     if (!isempty(eaten_piece_val)) eatenpieces(eaten_piece_val);
-    
-    if (is_promotion(board, c1, r1, c2, r2)) {
-            char p = (prom_piece != '\0') ? prom_piece : 'q';
-            board[dest_row][dest_col] = (turn(current.moves_played) == 0) ? tolower(p) : toupper(p);
-        }
-    
+
+    if (is_promotion(board, c2, r2)) {
+        char p = (prom_piece != '\0') ? prom_piece : Wqueen;
+        board[dest_row][dest_col] = (turn(current.moves_played) == WHITE_PLAYER) ? tolower(p) : toupper(p);
+    }
+
     if (check(board, current.moves_played)) {
         current = history[current.moves_played];
-        return 0;
+        return false;
     }
-    
+
     current.en_pass_col = -1;
-    if (start_piece == 'p' && (dest_row - start_row) == -2) current.en_pass_col = start_col;
-    if (start_piece == 'P' && (dest_row - start_row) == 2) current.en_pass_col = start_col;
+    if (start_piece == Wpawn && (dest_row - start_row) == -2) current.en_pass_col = start_col;
+    if (start_piece == Bpawn && (dest_row - start_row) == 2) current.en_pass_col = start_col;
     current.moves_played++;
     history[current.moves_played] = current;
-    return 1;
+    return true;
 }
 
 int turn(int moves_played)
@@ -105,54 +105,52 @@ int turn(int moves_played)
     return moves_played % 2;
 }
 
-void undo()
+bool undo()
 {
     if (current.moves_played > 0)
     {
         current = history[current.moves_played - 1];
         undoCount++;
-        printf("undone successfully\n\n");
+        return true;
     }
-    else
-        printf("nothing to undo\n\n");
+    return false;
 }
-void redo()
+
+bool redo()
 {
     if (undoCount > 0)
     {
         current = history[current.moves_played + 1];
         undoCount--;
-        printf("redone successfully\n\n");
+        return true;
     }
-    else
-        printf("nothing to redo\n\n");
+    return false;
 }
 
-void save_game()
+bool save_game()
 {
     FILE *save = fopen("save.txt", "wb");
     if (save == NULL)
-        printf("save failed\n");
-    else
-    {
-        fwrite(&current, sizeof(game), 1, save);
-        fwrite(history, sizeof(game), 1000, save);
-        fwrite(&undoCount, sizeof(int), 1, save);
-        fclose(save);
-        printf("saved successfully\n\n");
-    }
+        return false;
+
+    size_t written = 0;
+    written += fwrite(&current, sizeof(game), 1, save);
+    written += fwrite(history, sizeof(game), MAX_HISTORY, save);
+    written += fwrite(&undoCount, sizeof(int), 1, save);
+    fclose(save);
+    return written == (1 + MAX_HISTORY + 1);
 }
-void load_game()
+
+bool load_game()
 {
     FILE *load = fopen("save.txt", "rb");
     if (load == NULL)
-        printf("load failed\n\n");
-    else
-    {
-        fread(&current, sizeof(game), 1, load);
-        fread(history, sizeof(game), 1000, load);
-        fread(&undoCount, sizeof(int), 1, load);
-        fclose(load);
-        printf("loaded successfully\n\n");
-    }
+        return false;
+
+    size_t read_cnt = 0;
+    read_cnt += fread(&current, sizeof(game), 1, load);
+    read_cnt += fread(history, sizeof(game), MAX_HISTORY, load);
+    read_cnt += fread(&undoCount, sizeof(int), 1, load);
+    fclose(load);
+    return read_cnt == (1 + MAX_HISTORY + 1);
 }

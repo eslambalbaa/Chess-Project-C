@@ -1,22 +1,39 @@
+#include "gui.h"
+#include "critical_scenarios.h"
+#include "is_it_fns.h"
+#include "movement.h"
+#include "render_fns.h"
+#include "side_notes.h"
+#include "variables.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
-#include "critical_scenarios.h"
-#include "gui.h"
-#include "is_it_fns.h"
-#include "movement.h"
-#include "side_notes.h"
-#include "variables.h"
-
+const int WINDOW_WIDTH = 1300;
+const int WINDOW_HEIGHT = 800;
 const int BOARD_SIZE = 800;
-const int SIDEBAR_WIDTH = 350;
-const int WINDOW_WIDTH = BOARD_SIZE + SIDEBAR_WIDTH;
-const int WINDOW_HEIGHT = BOARD_SIZE;
 const int GRID_SIZE = BOARD_SIZE / 8;
+const int SIDEBAR_WIDTH = WINDOW_WIDTH - BOARD_SIZE;
+
+static SDL_Window *window = NULL;
+static SDL_Renderer *renderer = NULL;
+static TTF_Font *global_font = NULL;
+
+static bool running = true;
+static bool is_fullscreen = false;
+static int selected_row = -1;
+static int selected_col = -1;
+static const char *active_sidenote = NULL;
+
+static bool is_promoting = false;
+static char pending_c1, pending_c2;
+static int pending_r1, pending_r2;
+
+static std::unordered_map<char, SDL_Texture *> piece_textures;
 
 struct Button {
   SDL_Rect rect;
@@ -24,26 +41,12 @@ struct Button {
   void (*action)();
 };
 
-static Button sidebar_buttons[] = {
-    {{BOARD_SIZE + 50, 150, 250, 50}, "UNDO", undo},
-    {{BOARD_SIZE + 50, 220, 250, 50}, "REDO", redo},
-    {{BOARD_SIZE + 50, 290, 250, 50}, "SAVE", save_game},
-    {{BOARD_SIZE + 50, 360, 250, 50}, "LOAD", load_game}};
-
-static SDL_Window *window = nullptr;
-static SDL_Renderer *renderer = nullptr;
-static TTF_Font *global_font = nullptr;
-
-static bool running = false;
-static bool is_fullscreen = false;
-static int selected_row = -1;
-static int selected_col = -1;
-static std::unordered_map<char, SDL_Texture *> piece_textures;
-static const char *active_sidenote = nullptr;
-
-static bool is_promoting = false;
-static char pending_c1, pending_c2;
-static int pending_r1, pending_r2;
+static std::vector<Button> sidebar_buttons = {
+    {{BOARD_SIZE + 50, 150, 400, 45}, "UNDO", []() { undo(); }},
+    {{BOARD_SIZE + 50, 210, 400, 45}, "REDO", []() { redo(); }},
+    {{BOARD_SIZE + 50, 270, 400, 45}, "SAVE GAME", []() { save_game(); }},
+    {{BOARD_SIZE + 50, 330, 400, 45}, "LOAD GAME", []() { load_game(); }},
+    {{BOARD_SIZE + 50, 390, 400, 45}, "QUIT", []() { running = false; }}};
 
 static void execute_move_and_evaluate(char c1, int r1, char c2, int r2,
                                       char prom_piece) {
@@ -65,10 +68,12 @@ static void execute_move_and_evaluate(char c1, int r1, char c2, int r2,
 
 static void load_textures() {
   std::unordered_map<char, std::string> texture_files = {
-      {'p', "assets/wp.png"}, {'r', "assets/wr.png"}, {'n', "assets/wn.png"},
-      {'b', "assets/wb.png"}, {'q', "assets/wq.png"}, {'k', "assets/wk.png"},
-      {'P', "assets/bp.png"}, {'R', "assets/br.png"}, {'N', "assets/bn.png"},
-      {'B', "assets/bb.png"}, {'Q', "assets/bq.png"}, {'K', "assets/bk.png"}};
+      {Wpawn, "assets/wp.png"},   {Wrook, "assets/wr.png"},
+      {Wknight, "assets/wn.png"}, {Wbishop, "assets/wb.png"},
+      {Wqueen, "assets/wq.png"},  {Wking, "assets/wk.png"},
+      {Bpawn, "assets/bp.png"},   {Brook, "assets/br.png"},
+      {Bknight, "assets/bn.png"}, {Bbishop, "assets/bb.png"},
+      {Bqueen, "assets/bq.png"},  {Bking, "assets/bk.png"}};
 
   for (const auto &pair : texture_files) {
     SDL_Texture *tex = IMG_LoadTexture(renderer, pair.second.c_str());
@@ -86,7 +91,7 @@ static void handle_click(int x, int y) {
       int box_x = 200, box_y = 350, box_w = 400, box_h = 100;
       if (x >= box_x && x <= box_x + box_w && y >= box_y &&
           y <= box_y + box_h) {
-        char choices[] = {'q', 'r', 'b', 'n'};
+        char choices[] = {Wqueen, Wrook, Wbishop, Wknight};
         int idx = (x - box_x) / 100;
         execute_move_and_evaluate(pending_c1, pending_r1, pending_c2,
                                   pending_r2, choices[idx]);
@@ -102,12 +107,11 @@ static void handle_click(int x, int y) {
 
     if (selected_row == -1) {
       char piece = current.board[clicked_row][clicked_col];
-      if (piece != '.' && piece != '-') {
+      if (!isempty(piece)) {
         selected_row = clicked_row;
         selected_col = clicked_col;
       }
-    }
-    else {
+    } else {
       char c1 = selected_col + 'A';
       int r1 = 8 - selected_row;
       char c2 = clicked_col + 'A';
@@ -117,8 +121,8 @@ static void handle_click(int x, int y) {
         char moving_piece = current.board[selected_row][selected_col];
         int target_row = 8 - r2;
 
-        bool will_promote = (moving_piece == 'p' && target_row == 0) ||
-                            (moving_piece == 'P' && target_row == 7);
+        bool will_promote = (moving_piece == Wpawn && target_row == 0) ||
+                            (moving_piece == Bpawn && target_row == 7);
 
         if (will_promote) {
           is_promoting = true;
@@ -251,11 +255,11 @@ static void render_frame() {
   }
 
   if (is_promoting) {
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150);
     SDL_Rect dim_overlay = {0, 0, BOARD_SIZE, BOARD_SIZE};
     SDL_RenderFillRect(renderer, &dim_overlay);
-    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
+    SDL_SetRenderBlendMode(renderer, SDL_BLENDMODE_NONE);
 
     int box_x = 200, box_y = 350, box_w = 400, box_h = 100;
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
@@ -264,7 +268,7 @@ static void render_frame() {
     SDL_SetRenderDrawColor(renderer, 50, 50, 50, 255);
     SDL_RenderDrawRect(renderer, &menu_rect);
 
-    char pieces[] = {'q', 'r', 'b', 'n'};
+    char pieces[] = {Wqueen, Wrook, Wbishop, Wknight};
     bool is_white = (turn(current.moves_played) == 0);
 
     for (int i = 0; i < 4; i++) {

@@ -1,19 +1,23 @@
 #ifndef IS_IT_FNS_H
 #define IS_IT_FNS_H
 
+#include "variables.h"
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int is_valid_move(char board[8][8], char c1, int r1, char c2, int r2, int skip);
-int is_path_clear(char board[8][8], int destrow, int destcol, int startrow,
-                  int startcol);
-int iswhite(char piece);
-int isblack(char piece);
-int isempty(char place);
-int is_promotion(char board[8][8], char c1, int r1, char c2, int r2);
-int is_promotion_valid(char board[8][8], char promotion_piece, int startrow,
-                       int startcol);
+bool is_valid_move(char board[BOARD_ROWS][BOARD_COLS], char c1, int r1, char c2,
+                   int r2, int skip);
+bool is_path_clear(char board[BOARD_ROWS][BOARD_COLS], int destrow, int destcol,
+                   int startrow, int startcol);
+bool iswhite(char piece);
+bool isblack(char piece);
+bool isempty(char place);
+bool is_promotion(char board[BOARD_ROWS][BOARD_COLS], char c2, int r2);
+bool is_promotion_valid(char board[BOARD_ROWS][BOARD_COLS],
+                        char promotion_piece, int startrow, int startcol);
 
 #ifdef __cplusplus
 }

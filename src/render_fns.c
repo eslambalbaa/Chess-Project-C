@@ -13,19 +13,19 @@ void eatenpieces(int eaten_piece)
     current.black_eaten[current.black_eaten_count++] = eaten_piece;
 }
 
-void initposition(char board[8][8])
+void initposition(char board[BOARD_ROWS][BOARD_COLS])
 {
-  char initial_board[8][8] = {
-      {'R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R'},
-      {'P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'},
-      {'-', '.', '-', '.', '-', '.', '-', '.'},
-      {'.', '-', '.', '-', '.', '-', '.', '-'},
-      {'-', '.', '-', '.', '-', '.', '-', '.'},
-      {'.', '-', '.', '-', '.', '-', '.', '-'},
-      {'p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'},
-      {'r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'}};
+  char initial_board[BOARD_ROWS][BOARD_COLS] = {
+      {Brook, Bknight, Bbishop, Bqueen, Bking, Bbishop, Bknight, Brook},
+      {Bpawn, Bpawn, Bpawn, Bpawn, Bpawn, Bpawn, Bpawn, Bpawn},
+      {WEmpty, BEmpty, WEmpty, BEmpty, WEmpty, BEmpty, WEmpty, BEmpty},
+      {BEmpty, WEmpty, BEmpty, WEmpty, BEmpty, WEmpty, BEmpty, WEmpty},
+      {WEmpty, BEmpty, WEmpty, BEmpty, WEmpty, BEmpty, WEmpty, BEmpty},
+      {BEmpty, WEmpty, BEmpty, WEmpty, BEmpty, WEmpty, BEmpty, WEmpty},
+      {Wpawn, Wpawn, Wpawn, Wpawn, Wpawn, Wpawn, Wpawn, Wpawn},
+      {Wrook, Wknight, Wbishop, Wqueen, Wking, Wbishop, Wknight, Wrook}};
 
-  for (int i = 0; i < 8; i++)
-    for (int j = 0; j < 8; j++)
+  for (int i = 0; i < BOARD_ROWS; i++)
+    for (int j = 0; j < BOARD_COLS; j++)
       board[i][j] = initial_board[i][j];
 }

@@ -1,19 +1,23 @@
 #ifndef MOVEMENT_H
 #define MOVEMENT_H
 
+#include "variables.h"
+#include <stdbool.h>
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-int apply_gui_move(char board[8][8], char c1, int r1, char c2, int r2,
-                   char prom_piece);
+bool apply_gui_move(char board[BOARD_ROWS][BOARD_COLS], char c1, int r1,
+                    char c2, int r2, char prom_piece);
 int turn(int moves_played);
-int is_white_turn(int moves_played);
-int is_black_turn(int moves_played);
-void undo();
-void redo();
-void save_game();
-void load_game();
+bool is_white_turn(int moves_played);
+bool is_black_turn(int moves_played);
+bool undo();
+bool redo();
+bool save_game();
+bool load_game();
 
 #ifdef __cplusplus
 }
