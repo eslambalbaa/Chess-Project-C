@@ -5,8 +5,8 @@ SRC_DIR = src
 INC_DIR = include
 SDL_DIR = vendor/SDL2
 
-CFLAGS = -Wall -g -I$(INC_DIR) -I$(SDL_DIR)/include
-CXXFLAGS = -Wall -g -I$(INC_DIR) -I$(SDL_DIR)/include
+CFLAGS = -Wall -O3 -g -I$(INC_DIR) -I$(SDL_DIR)/include
+CXXFLAGS = -Wall -O3 -g -I$(INC_DIR) -I$(SDL_DIR)/include
 
 LDFLAGS = -L$(SDL_DIR)/lib -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lSDL2_ttf
 
