@@ -1,0 +1,11 @@
+# Project Dependencies (Installed locally in vendor/SDL2 - no global installation)
+# Target: x86_64-w64-mingw32
+
+# Libraries (vendored in vendor/SDL2)
+SDL2==2.32.10       # https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-devel-2.32.10-mingw.tar.gz
+SDL2_image==2.8.12  # https://github.com/libsdl-org/SDL_image/releases/download/release-2.8.12/SDL2_image-devel-2.8.12-mingw.tar.gz
+SDL2_ttf==2.24.0    # https://github.com/libsdl-org/SDL_ttf/releases/download/release-2.24.0/SDL2_ttf-devel-2.24.0-mingw.tar.gz
+
+# Build Toolchain (already expected on PATH)
+# - gcc / g++ (x86_64-w64-mingw32)
+# - mingw32-make
