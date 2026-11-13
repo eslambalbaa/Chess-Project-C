@@ -1,7 +1,7 @@
 #ifndef RENDER_FNS_H
 #define RENDER_FNS_H
 
-#include "variables.h"
+#include "globals.h"
 
 #ifdef __cplusplus
 extern "C" {

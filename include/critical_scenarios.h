@@ -1,9 +1,8 @@
 #ifndef CRITICAL_SCENARIOS_H
 #define CRITICAL_SCENARIOS_H
 
-#include "variables.h"
+#include "globals.h"
 #include <stdbool.h>
-
 
 #ifdef __cplusplus
 extern "C" {

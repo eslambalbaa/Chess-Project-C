@@ -1,4 +1,3 @@
-#include "variables.h"
 #include "side_notes.h"
 #include <stdlib.h>
 

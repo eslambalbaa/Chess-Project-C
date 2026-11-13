@@ -1,4 +1,4 @@
-#include "variables.h"
+#include "globals.h"
 #include "render_fns.h"
 #include "is_it_fns.h"
 #include "side_notes.h"
@@ -7,9 +7,9 @@
 
 void eatenpieces(int eaten_piece)
 {
-  if (iswhite(eaten_piece))
+  if (is_white(eaten_piece))
     current.white_eaten[current.white_eaten_count++] = eaten_piece;
-  else if (isblack(eaten_piece))
+  else if (is_black(eaten_piece))
     current.black_eaten[current.black_eaten_count++] = eaten_piece;
 }
 

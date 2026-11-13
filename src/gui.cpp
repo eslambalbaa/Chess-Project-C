@@ -1,10 +1,11 @@
 #include "gui.h"
 #include "critical_scenarios.h"
+#include "globals.h"
 #include "is_it_fns.h"
 #include "movement.h"
 #include "render_fns.h"
 #include "side_notes.h"
-#include "variables.h"
+#include "temporal_operations.h"
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_image.h>
 #include <SDL2/SDL_ttf.h>
@@ -121,8 +122,8 @@ static void handle_click(int x, int y) {
         char moving_piece = current.board[selected_row][selected_col];
         int target_row = 8 - r2;
 
-        bool will_promote = (moving_piece == Wpawn && target_row == 0) ||
-                            (moving_piece == Bpawn && target_row == 7);
+        bool will_promote = (moving_piece == Wpawn && target_row == RANK_8) ||
+                            (moving_piece == Bpawn && target_row == RANK_1);
 
         if (will_promote) {
           is_promoting = true;
@@ -165,8 +166,8 @@ static void render_frame() {
   SDL_SetRenderDrawColor(renderer, 128, 120, 117, 255);
   SDL_RenderClear(renderer);
 
-  for (int r = 0; r < 8; r++) {
-    for (int c = 0; c < 8; c++) {
+  for (int r = 0; r < BOARD_ROWS; r++) {
+    for (int c = 0; c < BOARD_COLS; c++) {
       SDL_Rect rect = {c * GRID_SIZE, r * GRID_SIZE, GRID_SIZE, GRID_SIZE};
 
       if ((r + c) % 2 == 0)
@@ -255,11 +256,11 @@ static void render_frame() {
   }
 
   if (is_promoting) {
-    SDL_SetRenderBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 150);
     SDL_Rect dim_overlay = {0, 0, BOARD_SIZE, BOARD_SIZE};
     SDL_RenderFillRect(renderer, &dim_overlay);
-    SDL_SetRenderBlendMode(renderer, SDL_BLENDMODE_NONE);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_NONE);
 
     int box_x = 200, box_y = 350, box_w = 400, box_h = 100;
     SDL_SetRenderDrawColor(renderer, 220, 220, 220, 255);
@@ -269,7 +270,7 @@ static void render_frame() {
     SDL_RenderDrawRect(renderer, &menu_rect);
 
     char pieces[] = {Wqueen, Wrook, Wbishop, Wknight};
-    bool is_white = (turn(current.moves_played) == 0);
+    bool is_white = (turn(current.moves_played) == WHITE_PLAYER);
 
     for (int i = 0; i < 4; i++) {
       char p = is_white ? tolower(pieces[i]) : toupper(pieces[i]);

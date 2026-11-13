@@ -1,7 +1,15 @@
-#include "variables.h"
+#include "globals.h"
 #include "critical_scenarios.h"
 #include "is_it_fns.h"
 #include "movement.h"
+
+static bool is_own_piece(char piece, int moves_played)
+{
+    if (isempty(piece))
+        return false;
+
+    return is_white(piece) == is_white_turn(moves_played);
+}
 
 bool check(char board[BOARD_ROWS][BOARD_COLS], int moves_played)
 {
@@ -31,15 +39,11 @@ bool check(char board[BOARD_ROWS][BOARD_COLS], int moves_played)
         for (int j = 0; j < BOARD_COLS; j++)
         {
             char under_check = board[i][j];
-            if (isempty(under_check))
+            if (isempty(under_check) || is_own_piece(under_check, moves_played))
                 continue;
 
-            if ((iswhite(under_check) && is_black_turn(moves_played)) ||
-                (isblack(under_check) && is_white_turn(moves_played)))
-            {
-                if (is_valid_move(board, j + 'A', 8 - i, k_col + 'A', 8 - k_row, 1))
-                    return true;
-            }
+            if (is_valid_move(board, j + 'A', 8 - i, k_col + 'A', 8 - k_row, 1))
+                return true;
         }
     }
 
@@ -68,40 +72,58 @@ bool endgame(char board[BOARD_ROWS][BOARD_COLS])
     return checkmate(board) || stalemate(board);
 }
 
+static bool try_move(char board[BOARD_ROWS][BOARD_COLS],
+                     int src_r, int src_c,
+                     int dst_r, int dst_c,
+                     int moves_played)
+{
+    char moving_piece = board[src_r][src_c];
+    char captured = board[dst_r][dst_c];
+
+    board[dst_r][dst_c] = moving_piece;
+    board[src_r][src_c] = EMPTY_SQUARE(src_r, src_c);
+
+    bool is_safe = !check(board, moves_played);
+
+    board[src_r][src_c] = moving_piece;
+    board[dst_r][dst_c] = captured;
+
+    return is_safe;
+}
+
+static bool piece_has_legal_move(char board[BOARD_ROWS][BOARD_COLS],
+                                 int src_r, int src_c,
+                                 int moves_played)
+{
+    char src_file = src_c + 'A';
+    int src_rank = 8 - src_r;
+
+    for (int dst_r = 0; dst_r < BOARD_ROWS; dst_r++)
+    {
+        for (int dst_c = 0; dst_c < BOARD_COLS; dst_c++)
+        {
+            if (is_valid_move(board, src_file, src_rank, dst_c + 'A', 8 - dst_r, 1) &&
+                try_move(board, src_r, src_c, dst_r, dst_c, moves_played))
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 bool has_any_legal_move(char board[BOARD_ROWS][BOARD_COLS], int moves_played)
 {
-    for (int i = 0; i < BOARD_ROWS; i++)
+    for (int r = 0; r < BOARD_ROWS; r++)
     {
-        for (int j = 0; j < BOARD_COLS; j++)
+        for (int c = 0; c < BOARD_COLS; c++)
         {
-            char piece = board[i][j];
-            if (isempty(piece))
+            char piece = board[r][c];
+            if (!is_own_piece(piece, moves_played))
                 continue;
 
-            if ((iswhite(piece) && is_black_turn(moves_played)) ||
-                (isblack(piece) && is_white_turn(moves_played)))
-                continue;
-
-            for (int r = 0; r < BOARD_ROWS; r++)
-            {
-                for (int c = 0; c < BOARD_COLS; c++)
-                {
-                    if (is_valid_move(board, j + 'A', 8 - i, c + 'A', 8 - r, 1))
-                    {
-                        char temp = board[r][c];
-                        board[r][c] = board[i][j];
-                        board[i][j] = EMPTY_SQUARE(i, j);
-
-                        bool is_safe = !check(board, moves_played);
-
-                        board[i][j] = board[r][c];
-                        board[r][c] = temp;
-
-                        if (is_safe)
-                            return true;
-                    }
-                }
-            }
+            if (piece_has_legal_move(board, r, c, moves_played))
+                return true;
         }
     }
     return false;

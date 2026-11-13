@@ -1,8 +1,9 @@
+#include "globals.h"
 #include "gui.h"
 #include "render_fns.h"
-#include "variables.h"
 #include <stdlib.h>
 #include <time.h>
+
 
 int main(int argc, char *argv[]) {
 

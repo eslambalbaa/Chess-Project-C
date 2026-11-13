@@ -1,24 +1,9 @@
-#include "variables.h"
+#include "globals.h"
 #include "is_it_fns.h"
 #include "movement.h"
 #include "critical_scenarios.h"
 #include <stdlib.h>
-#include <ctype.h>
 
-bool iswhite(char piece)
-{
-    return piece >= 'a' && piece <= 'z';
-}
-
-bool isblack(char piece)
-{
-    return piece >= 'A' && piece <= 'Z';
-}
-
-bool isempty(char place)
-{
-    return place == WEmpty || place == BEmpty;
-}
 
 bool is_path_clear(char board[BOARD_ROWS][BOARD_COLS], int dest_row, int dest_col, int start_row, int start_col)
 {
@@ -50,9 +35,9 @@ static bool is_valid_pawn_move(char board[BOARD_ROWS][BOARD_COLS], char piece,
 {
     int row_diff = dest_row - start_row;
     int col_diff = dest_col - start_col;
-    int forward_dir = (piece == Wpawn) ? -1 : 1;
-    int initial_row = (piece == Wpawn) ? 6 : 1;
-    int ep_target_row = (piece == Wpawn) ? 2 : 5;
+    int forward_dir = (piece == Wpawn) ? DIR_NORTH : DIR_SOUTH;
+    int initial_row = (piece == Wpawn) ? RANK_2 : RANK_7;
+    int ep_target_row = (piece == Wpawn) ? RANK_6 : RANK_3;
 
     if (col_diff == 0)
     {
@@ -80,7 +65,7 @@ static bool is_valid_castling(char board[BOARD_ROWS][BOARD_COLS], char king_piec
     bool king_moved = (player == WHITE_PLAYER) ? current.white_king_moved : current.black_king_moved;
     bool rook_moved_a = (player == WHITE_PLAYER) ? current.white_rook_moved_a : current.black_rook_moved_a;
     bool rook_moved_h = (player == WHITE_PLAYER) ? current.white_rook_moved_h : current.black_rook_moved_h;
-    int home_row = (player == WHITE_PLAYER) ? 7 : 0;
+    int home_row = (player == WHITE_PLAYER) ? RANK_1 : RANK_8;
 
     if (start_row != home_row || king_moved)
         return false;
@@ -127,14 +112,14 @@ bool is_valid_move(char board[BOARD_ROWS][BOARD_COLS], char c1, int r1, char c2,
     int row_diff = dest_row - start_row;
     int col_diff = dest_col - start_col;
 
-    if (skip == 0 && iswhite(piece) && turn(current.moves_played) == BLACK_PLAYER)
+    if (skip == 0 && is_white(piece) && turn(current.moves_played) == BLACK_PLAYER)
         return false;
-    else if (skip == 0 && isblack(piece) && turn(current.moves_played) == WHITE_PLAYER)
+    else if (skip == 0 && is_black(piece) && turn(current.moves_played) == WHITE_PLAYER)
         return false;
 
     if (start_row == dest_row && start_col == dest_col)
         return false;
-    if ((iswhite(piece) && iswhite(board[dest_row][dest_col])) || (isblack(piece) && isblack(board[dest_row][dest_col])))
+    if ((is_white(piece) && is_white(board[dest_row][dest_col])) || (is_black(piece) && is_black(board[dest_row][dest_col])))
         return false;
 
     switch (piece)
@@ -179,7 +164,7 @@ bool is_promotion(char board[BOARD_ROWS][BOARD_COLS], char c2, int r2)
     int dest_col = c2 - 'A';
     char piece = board[dest_row][dest_col];
 
-    return (piece == Wpawn && iswhite(piece) && dest_row == 0) || (piece == Bpawn && isblack(piece) && dest_row == 7);
+    return (piece == Wpawn && is_white(piece) && dest_row == RANK_8) || (piece == Bpawn && is_black(piece) && dest_row == RANK_1);
 }
 
 bool is_promotion_valid(char board[BOARD_ROWS][BOARD_COLS], char promotion_piece, int start_row, int start_col)
